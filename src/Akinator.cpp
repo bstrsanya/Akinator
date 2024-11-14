@@ -26,7 +26,6 @@ void Print (Node_t* node)
     printf ("{\n");
     printf ("%s", node->data);
     if (node->left) Print (node->left);
-    
     if (node->right) Print (node->right);
 
     printf ("}\n");
@@ -73,18 +72,21 @@ void PrintDot (Node_t* node)
     system ("dot ./aaa.dot -Tpng -o ./aaa.png");
 }
 
-void ReadDataBase (Node_t* main_node)
+Tree* ReadDataBase ()
 {
-    size_t size = 0;
+    Tree* tree = (Tree*) calloc (1, sizeof (Tree));
+    assert (tree);
+
     FILE* file = fopen ("./DataAkinator.txt", "r");
     char* str;
+    size_t size = 0;
     str = ReadFile (file, &size);
     fclose (file);
-    char* str_copy = str;
+
+    char* str_copy = str; // after clean
     
     stack_t stk = {};
     StackCtor (&stk, 10);
-    StackPush (&stk, main_node);
 
     while (str[0]) // != EOF
     {
@@ -102,18 +104,19 @@ void ReadDataBase (Node_t* main_node)
                 str += n + 2;
 
                 char* cal_str = (char*) calloc ((size_t) n + 1, sizeof (char));
-                q[n] = '"';
-                sscanf (q, "%[^\"]", cal_str);
+                sscanf (q, "%[^0]", cal_str);
                 Node_t* ad = CreateNode (cal_str);
                 StackPush (&stk, ad);
+                if (tree->deep < (int) stk.size) tree->deep = (int) stk.size;
             }
-
         }
         if (str[0] == '}')
         {
             str += 1;
             Node_t* sun = NULL;
             StackPop (&stk, &sun);
+            if (stk.size != 0) 
+            {
             Node_t* parent = NULL;
             StackPop (&stk, &parent);
 
@@ -126,13 +129,19 @@ void ReadDataBase (Node_t* main_node)
                 parent->right = sun;
             }
             sun->parent = parent;
-            StackPush (&stk, parent);
-            
+            StackPush (&stk, parent); 
+            }  
+            else 
+            {
+                StackPush (&stk, sun);
+            }          
         }
     }
 
+    StackPop (&stk, &tree->main_node);
     FreeStack (&stk);
     free (str_copy);
+    return tree;
 }
 
 void SkipProb (char** str)
@@ -142,50 +151,107 @@ void SkipProb (char** str)
     *str += n;
 }
 
-void InteractionUser (Node_t* node)
+void InteractionUser (Tree* tree)
 {
-    printf ("Hello, now guess the object at the physics department, and I'll try to guess it!\n"
-            "You should answer yes or no to my questions.\n Let's start!\n");
-    Guessing (node);
+    printf ("Hello! What will you choose?\n");
 
+    int c = 0;
+    int isEnd = 1;
+
+    while (isEnd)
+    {
+        printf ("[G]uess [I]dentify [C]ompare\n"
+        "[B]inary_tree [S]ave [E]xit\n");
+        c = getchar ();
+        while (!CleanBufer ())
+        {
+            printf ("The command must contain one letter! Try again!\n");
+            c = getchar ();
+        }
+        switch (c)
+        {
+        case 'G':
+            {Guessing (tree);
+            break;}
+        case 'I':
+            {char str[100] = "";
+            scanf ("%[^\n]", str);
+            getchar();
+            Identify (tree, str);
+            break;}
+        case 'C':
+            {printf ("update\n");
+            break;}
+        case 'B':
+            {printf ("update\n");
+            break;}
+        case 'S':
+            {printf ("update\n");
+            break;}
+        case 'E':
+            {isEnd = 0;
+            break;}
+        default:    
+            printf ("Incorrect command! Try again\n");
+        }
+    }      
 }
 
-void Guessing (Node_t* node)
+void Identify (Tree* tree, char* str)
+{
+    Node_t* elem = NULL;
+    Find (tree->main_node, str, &elem);
+    while (elem)
+    {
+        printf ("[%s]\n", elem->data);
+        elem = elem->parent;
+    }
+}
+
+void Find (Node_t* node, char* str, Node_t** elem)
+{
+    if (!node) return;
+    
+    if (node->left) Find (node->left, str, elem);
+    if (node->right) Find (node->right, str, elem);
+
+    if (!strcmp (node->data, str)) *elem = node;
+}
+
+void Guessing (Tree* tree)
 {
     char answer[100] = {};
+    Node_t* node = tree->main_node;
 
     while (node->left != NULL)
     {
         printf ("%s\n", node->data);
-        scanf ("%s", answer);
 
-        if (!strcmp (answer, "yes"))
-        {
+        if (ScanYesNo ())
             node = node->left;
-        }
-        if (!strcmp (answer, "no"))
-        {
+        else
             node = node->right;
-        }
     }
 
     printf ("This is %s\nI was able to guess?\n", node->data);
-    scanf ("%s", answer);
-    if (!strcmp (answer, "yes"))
+
+    if (ScanYesNo ())
         printf ("thanks\n");
 
-    if (!strcmp (answer, "no"))
+    else
     {
+        tree->deep += 1;
         printf ("Who is it?\n");
         int n1 = 0;
-        scanf  ("%s%n", answer, &n1);
+        scanf  ("%[^\n]%n", answer, &n1);
         printf ("How does %s differ from %s\n", answer, node->data);
+        getchar();
 
         char differ[100] = {};
         int n = 0;
-        scanf ("%s%n", differ, &n);
+        scanf ("%[^\n]%n", differ, &n);
         char* zxc = (char*) calloc ((size_t) n + 1, sizeof (char));
-        sscanf (differ, "%s", zxc);
+        sscanf (differ, "%[^0]", zxc);
 
         Node_t* dif = CreateNode(zxc);
         dif->parent = node->parent;
@@ -204,10 +270,39 @@ void Guessing (Node_t* node)
         }
         node->parent = dif;
         char* zxc1 = (char*) calloc ((size_t) n1 + 1, sizeof (char));
-        sscanf (answer, "%s", zxc1);
+        sscanf (answer, "%[^0]", zxc1);
+        getchar ();
 
         Node_t* new_left = CreateNode (zxc1);
         dif->left = new_left; 
         new_left->parent = dif;
     }
+}
+
+int CleanBufer ()
+{
+    int ch = 0, i = 0;
+
+    while ((ch = getchar ()) != '\n' && ch != EOF)
+        i++;
+
+    if (i > 0)
+        return 0;
+    
+    return 1;
+}
+
+int ScanYesNo ()
+{
+    char str[10] = "";
+    int nReadParam = scanf ("%s", str);
+
+    while (!CleanBufer () || nReadParam != 1 || !(!strcmp (str, "yes") ^ !strcmp (str, "no")))
+        {
+        printf ("Enter \"yes\" or \"no\"\n");
+        nReadParam = scanf ("%s", str);
+        }
+    
+    if (!strcmp (str, "yes")) return 1;
+    return 0;
 }
