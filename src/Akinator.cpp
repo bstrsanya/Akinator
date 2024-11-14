@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include "stack.h"
 
 #include "Akinator.h"
 
@@ -10,7 +11,10 @@ Node_t* CreateNode (char* value)
     Node_t* new_node = (Node_t*) calloc (1, sizeof (Node_t));
     if (new_node == NULL) assert (0);
 
-    new_node->data = value;
+    new_node->data   = value;
+    new_node->left   = NULL;
+    new_node->right  = NULL;
+    new_node->parent = NULL;
 
     return new_node;
 }
@@ -44,7 +48,7 @@ void CreateDot (Node_t* node, FILE* file_dot)
 {
     if (!node) return;
 
-    fprintf (file_dot, "node%p [shape=record; style = filled; fillcolor = \"#ffe4c4\"; color = \"#800000\"; label = \"{data = %s | address = %p | { <f0> left = %p | <f1> right = %p}}\"];\n", node, node->data, node, node->left, node->right);
+    fprintf (file_dot, "node%p [shape=record; style = filled; fillcolor = \"#ffe4c4\"; color = \"#800000\"; label = \"{data = %s | address (parent) = %p | address = %p | { <f0> left = %p | <f1> right = %p}}\"];\n", node, node->data, node->parent, node, node->left, node->right);
 
     if (node->left) 
     {
@@ -69,38 +73,65 @@ void PrintDot (Node_t* node)
     system ("dot ./aaa.dot -Tpng -o ./aaa.png");
 }
 
-void ReadDataBase ()
+void ReadDataBase (Node_t* main_node)
 {
     size_t size = 0;
     FILE* file = fopen ("./DataAkinator.txt", "r");
     char* str;
     str = ReadFile (file, &size);
+    fclose (file);
     char* str_copy = str;
     
+    stack_t stk = {};
+    StackCtor (&stk, 10);
+    StackPush (&stk, main_node);
+
     while (str[0]) // != EOF
     {
         SkipProb (&str);
         if (str[0] == '{')
         {
-            printf ("Создание нового узла\n");
             str += 1;
+            SkipProb (&str);
+
+            if (str[0] == '"')
+            {
+                char q[100] = {};
+                int n = 0;
+                sscanf (str + 1, "%[^\"]%n", q, &n);
+                str += n + 2;
+
+                char* cal_str = (char*) calloc ((size_t) n + 1, sizeof (char));
+                q[n] = '"';
+                sscanf (q, "%[^\"]", cal_str);
+                Node_t* ad = CreateNode (cal_str);
+                StackPush (&stk, ad);
+            }
+
         }
         if (str[0] == '}')
         {
-            printf ("Закрытие узла\n");
             str += 1;
-        }
-        if (str[0] == '"')
-        {
-            char q[100] = {};
-            int n = 0;
-            sscanf (str + 1, "%[^\"]%n", q, &n); // begin reading after ' " '
-            printf ("Data = %s\n", q);
-            str += n + 2;                        // skip ' " ... " '
+            Node_t* sun = NULL;
+            StackPop (&stk, &sun);
+            Node_t* parent = NULL;
+            StackPop (&stk, &parent);
+
+            if (!parent->left)
+            {
+                parent->left = sun;
+            }
+            else
+            {
+                parent->right = sun;
+            }
+            sun->parent = parent;
+            StackPush (&stk, parent);
+            
         }
     }
 
-
+    FreeStack (&stk);
     free (str_copy);
 }
 
@@ -121,29 +152,24 @@ void InteractionUser (Node_t* node)
 
 void Guessing (Node_t* node)
 {
-    Node_t* way[10] = {};
-    way[0] = node;
-    int i = 0;
-
     char answer[100] = {};
 
-    while (way[i]->left != NULL)
+    while (node->left != NULL)
     {
-        i++;
-        printf ("%s\n", way[i-1]->data);
+        printf ("%s\n", node->data);
         scanf ("%s", answer);
 
         if (!strcmp (answer, "yes"))
         {
-            way[i] = way[i-1]->left;
+            node = node->left;
         }
         if (!strcmp (answer, "no"))
         {
-            way[i] = way[i-1]->right;
+            node = node->right;
         }
     }
 
-    printf ("This is %s\nI was able to guess?\n", way[i]->data);
+    printf ("This is %s\nI was able to guess?\n", node->data);
     scanf ("%s", answer);
     if (!strcmp (answer, "yes"))
         printf ("thanks\n");
@@ -153,34 +179,35 @@ void Guessing (Node_t* node)
         printf ("Who is it?\n");
         int n1 = 0;
         scanf  ("%s%n", answer, &n1);
-        printf ("How does %s differ from %s\n", answer, way[i]->data);
+        printf ("How does %s differ from %s\n", answer, node->data);
 
         char differ[100] = {};
         int n = 0;
         scanf ("%s%n", differ, &n);
-        char* zxc = (char*) calloc ((size_t) n, sizeof (char));
+        char* zxc = (char*) calloc ((size_t) n + 1, sizeof (char));
         sscanf (differ, "%s", zxc);
 
-
         Node_t* dif = CreateNode(zxc);
+        dif->parent = node->parent;
 
-        if (way[i-1]->left == way[i]) 
+        if (node->parent->left == node) 
         {
-            Node_t* old = way[i-1]->left;
-            way[i-1]->left = dif;
+            Node_t* old = node->parent->left;
+            node->parent->left = dif;
             dif->right = old;
         }
         else
         {
-            Node_t* old = way[i-1]->right;
-            way[i-1]->right = dif;
+            Node_t* old = node->parent->right;
+            node->parent->right = dif;
             dif->right = old;
         }
-
-        char* zxc1 = (char*) calloc ((size_t) n1, sizeof (char));
+        node->parent = dif;
+        char* zxc1 = (char*) calloc ((size_t) n1 + 1, sizeof (char));
         sscanf (answer, "%s", zxc1);
 
         Node_t* new_left = CreateNode (zxc1);
         dif->left = new_left; 
+        new_left->parent = dif;
     }
 }

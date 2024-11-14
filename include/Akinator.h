@@ -9,7 +9,10 @@ struct Node_t
     char* data;
     Node_t* left;
     Node_t* right;
+    Node_t* parent;
 };
+
+typedef Node_t* StackElem_t;
 
 Node_t* CreateNode (char* value);
 void Print (Node_t* node);
@@ -19,7 +22,7 @@ void PrintDot (Node_t* node);
 void InteractionUser(Node_t *node);
 // void NewFunction(Node_t *node);
 void Guessing (Node_t* node);
-void ReadDataBase ();
+void ReadDataBase (Node_t* main_node);
 void SkipProb (char** str);
 
 #endif
