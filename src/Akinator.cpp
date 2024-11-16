@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include "stack.h"
 
 #include "Akinator.h"
 
@@ -174,13 +173,10 @@ void InteractionUser (Tree* tree)
             {Guessing (tree);
             break;}
         case 'I':
-            {char str[100] = "";
-            scanf ("%[^\n]", str);
-            getchar();
-            Identify (tree, str);
+            {Identify (tree);
             break;}
         case 'C':
-            {printf ("update\n");
+            {Compare (tree);
             break;}
         case 'B':
             {printf ("update\n");
@@ -197,15 +193,123 @@ void InteractionUser (Tree* tree)
     }      
 }
 
-void Identify (Tree* tree, char* str)
+void Compare (Tree* tree)
+{
+    char str1[100] = "";
+    scanf ("%[^\n]", str1);
+    getchar ();
+    stack_t* stk1 = Way (tree, str1);
+
+    if (!stk1) printf ("This character is not in the database\n");
+    else
+    {
+        char str2[100] = "";
+        scanf ("%[^\n]", str2);
+        getchar ();
+        stack_t* stk2 = Way (tree, str2);
+        if (!stk2) printf ("This character is not in the database\n");
+        else
+        {
+            PrintCompare (stk1, stk2);
+            FreeStack (stk1);
+            FreeStack (stk2);
+            free (stk1);
+            free (stk2);
+        }
+    }
+}
+
+void PrintCompare (stack_t* stk1, stack_t* stk2)
+{
+    Node_t* node1_main = NULL;
+    StackPop (stk1, &node1_main);
+    Node_t* node2_main = NULL;
+    StackPop (stk2, &node2_main);
+    Node_t* node1_parent = NULL;
+    StackPop (stk1, &node1_parent);
+    Node_t* node2_parent = NULL;
+    StackPop (stk2, &node2_parent);
+    Node_t* node1_son = NULL;
+    StackPop (stk1, &node1_son);
+    Node_t* node2_son = NULL;
+    StackPop (stk2, &node2_son);
+
+    printf ("Similarities: ");
+    while (!(strcmp (node1_son->data, node2_son->data)))
+    {
+        printf ("%s ", node1_parent->data);
+        StackPush (stk1, node1_son);        
+        StackPush (stk2, node2_son); 
+        StackPop (stk1, &node1_parent);
+        StackPop (stk2, &node2_parent);
+        if (stk1->size > 0 && stk2->size > 0)
+        {
+            StackPop (stk1, &node1_son);
+            StackPop (stk2, &node2_son);
+        }
+        else break;
+    }
+    printf ("\nDifferences: %s\n", node1_parent->data);
+}
+
+void Identify (Tree* tree)
+{
+    char str[100] = "";
+    scanf ("%[^\n]", str);
+    getchar ();
+    stack_t* stk = Way (tree, str);
+
+    if (!stk) printf ("This character is not in the database\n");
+    else 
+    {
+        PrintIdentify (stk);
+        FreeStack (stk);
+        free (stk);
+    }
+}
+
+stack_t* Way (Tree* tree, char* str)
 {
     Node_t* elem = NULL;
     Find (tree->main_node, str, &elem);
-    while (elem)
+    if (!elem) return NULL;
+    Node_t* elem_0 = elem;
+    stack_t* stk = (stack_t*) calloc (1, sizeof (stack_t));
+    StackCtor (stk, 10);
+    assert (stk);
+
+    while (elem->parent)
     {
-        printf ("[%s]\n", elem->data);
+        StackPush (stk, elem->parent);
         elem = elem->parent;
     }
+    StackPush (stk, elem_0);
+    return stk;
+}
+
+void PrintIdentify (stack_t* stk)
+{
+    Node_t* node_0 = NULL;
+    StackPop (stk, &node_0);
+    Node_t* node_1 = NULL;
+    Node_t* node_2 = NULL;
+    printf ("%s it: ", node_0->data);
+    while (stk->size > 1)
+    {
+        StackPop (stk, &node_1);
+        StackPop (stk, &node_2);
+        if (node_1->left == node_2)
+            printf ("%s ", node_1->data);
+        else
+            printf ("NO %s ", node_1->data);
+        StackPush (stk, node_2);
+    }
+    StackPop (stk, &node_1);
+    if (node_1->left == node_0)
+        printf ("%s ", node_1->data);
+    else
+        printf ("NO %s ", node_1->data);
+    putchar ('\n');
 }
 
 void Find (Node_t* node, char* str, Node_t** elem)

@@ -3,14 +3,8 @@
 
 #include "Readfile.h"
 #include "SizeFile.h"
-
-struct Node_t
-{
-    char* data;
-    Node_t* left;
-    Node_t* right;
-    Node_t* parent;
-};
+#include "stack.h"
+#include "Struct.h"
 
 struct Tree
 {
@@ -33,6 +27,11 @@ void SkipProb (char** str);
 int CleanBufer ();
 int ScanYesNo ();
 void Find (Node_t* node, char* str, Node_t** elem);
-void Identify (Tree* tree, char* str);
+void Identify (Tree* tree);
+void Compare (Tree* tree);
+stack_t* Way (Tree* tree, char* str);
+void PrintIdentify (stack_t* stk);
+void PrintCompare (stack_t* stk1, stack_t* stk2);
+
 
 #endif
