@@ -324,7 +324,6 @@ void Find (Node_t* node, char* str, Node_t** elem)
 
 void Guessing (Tree* tree)
 {
-    char answer[100] = {};
     Node_t* node = tree->main_node;
 
     while (node->left != NULL)
@@ -346,16 +345,11 @@ void Guessing (Tree* tree)
     {
         tree->deep += 1;
         printf ("Who is it?\n");
-        int n1 = 0;
-        scanf  ("%[^\n]%n", answer, &n1);
-        printf ("How does %s differ from %s\n", answer, node->data);
-        getchar();
+        char* answer_0 = ScanStr (); 
+        printf ("How does %s differ from %s\n", answer_0, node->data);
+        getchar ();
 
-        char differ[100] = {};
-        int n = 0;
-        scanf ("%[^\n]%n", differ, &n);
-        char* zxc = (char*) calloc ((size_t) n + 1, sizeof (char));
-        sscanf (differ, "%[^0]", zxc);
+        char* zxc = ScanStr ();
 
         Node_t* dif = CreateNode(zxc);
         dif->parent = node->parent;
@@ -373,11 +367,8 @@ void Guessing (Tree* tree)
             dif->right = old;
         }
         node->parent = dif;
-        char* zxc1 = (char*) calloc ((size_t) n1 + 1, sizeof (char));
-        sscanf (answer, "%[^0]", zxc1);
-        getchar ();
 
-        Node_t* new_left = CreateNode (zxc1);
+        Node_t* new_left = CreateNode (answer_0);
         dif->left = new_left; 
         new_left->parent = dif;
     }
@@ -409,4 +400,19 @@ int ScanYesNo ()
     
     if (!strcmp (str, "yes")) return 1;
     return 0;
+}
+
+char* ScanStr ()
+{
+    int len = 0;
+    char answer[100] = {};
+    scanf  ("%99[^\n]%n", answer, &len);
+    while (!CleanBufer ())
+    {
+        printf ("The maximum buffer size has been exceeded (100). Try again.\n");
+        scanf  ("%99[^\n]%n", answer, &len);
+    }
+    char* zxc = (char*) calloc ((size_t) len + 1, sizeof (char));
+    sscanf (answer, "%[^0]", zxc);
+    return zxc;
 }

@@ -32,6 +32,6 @@ void Compare (Tree* tree);
 stack_t* Way (Tree* tree, char* str);
 void PrintIdentify (stack_t* stk);
 void PrintCompare (stack_t* stk1, stack_t* stk2);
-
+char* ScanStr ();
 
 #endif
