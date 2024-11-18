@@ -22,7 +22,6 @@ void TreeDtor (Tree* tree);
 void CreateDot (Node_t* node, FILE* file);
 void PrintDot (Node_t* node);
 void InteractionUser(Tree* tree);
-// void NewFunction(Node_t *node);
 void Guessing (Tree* node);
 void ReadDataBase (Tree* tree);
 void SkipProb (char** str);
