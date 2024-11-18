@@ -411,17 +411,22 @@ int CleanBufer ()
 
 int ScanYesNo ()
 {
-    char str[10] = "";
-    int nReadParam = scanf ("%s", str);
-
-    while (!CleanBufer () || nReadParam != 1 || !(!strcmp (str, "yes") ^ !strcmp (str, "no")))
-        {
-        printf ("Enter \"yes\" or \"no\"\n");
-        nReadParam = scanf ("%s", str);
-        }
-    
-    if (!strcmp (str, "yes")) return 1;
-    return 0;
+    char* str = ScanStr ();
+    while (!(strcmp (str, "yes") ^ strcmp (str, "no")))
+    {
+        printf ("Input [YES] or [NO]\n");
+        str = ScanStr ();
+    }
+    if (!strcmp (str, "yes")) 
+    {
+        free (str);
+        return 1;
+    }
+    else
+    {
+        free (str);
+        return 0;
+    }
 }
 
 char* ScanStr ()
