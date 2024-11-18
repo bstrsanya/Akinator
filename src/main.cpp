@@ -9,8 +9,8 @@ int main()
     Tree tree = {};
     TreeCtor (&tree, "./DataAkinator.txt");
     assert (&tree);
-    InteractionUser (&tree);
     
-    PrintDot ((&tree)->main_node);
+    InteractionUser (&tree);
+
     TreeDtor (&tree);
 }
