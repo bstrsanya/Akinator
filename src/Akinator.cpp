@@ -187,7 +187,7 @@ void InteractionUser (Tree* tree)
             {Compare (tree);
             break;}
         case 'B': case 'b':
-            {printf ("update\n");
+            {PrintDot (tree->main_node);
             break;}
         case 'S': case 's':
             {
