@@ -18,28 +18,43 @@ Node_t* CreateNode (char* value)
     return new_node;
 }
 
-void Print (Node_t* node)
+void Print (Node_t* node, Tree* tree)
 {
     if (!node) return;
     
-    printf ("{\n");
-    printf ("%s", node->data);
-    if (node->left) Print (node->left);
-    if (node->right) Print (node->right);
+    fprintf (tree->file_data, "{");
+    fprintf (tree->file_data, "\"%s\"", node->data);
+    if (node->left) Print (node->left, tree);
+    if (node->right) Print (node->right, tree);
 
-    printf ("}\n");
+    fprintf (tree->file_data, "}");
 }
 
-void DtorNode (Node_t* node)
+
+void NodeDtor (Node_t* node)
 {
     if (!node) return;
     
-    if (node->left) DtorNode (node->left);
-    if (node->right) DtorNode (node->right);
+    if (node->left) NodeDtor (node->left);
+    if (node->right) NodeDtor (node->right);
 
     free (node->data);
     free (node);
 }
+
+void TreeDtor (Tree* tree)
+{
+    NodeDtor (tree->main_node);
+}
+
+void TreeCtor (Tree* tree, const char* name_file)
+{
+    FILE* file = fopen (name_file, "r");
+    tree->file_data = file;
+    ReadDataBase (tree);
+    fclose (tree->file_data);
+}
+
 
 
 void CreateDot (Node_t* node, FILE* file_dot)
@@ -71,18 +86,13 @@ void PrintDot (Node_t* node)
     system ("dot ./aaa.dot -Tpng -o ./aaa.png");
 }
 
-Tree* ReadDataBase ()
+void ReadDataBase (Tree* tree)
 {
-    Tree* tree = (Tree*) calloc (1, sizeof (Tree));
-    assert (tree);
-
-    FILE* file = fopen ("./DataAkinator.txt", "r");
     char* str;
     size_t size = 0;
-    str = ReadFile (file, &size);
-    fclose (file);
+    str = ReadFile (tree->file_data, &size);
 
-    char* str_copy = str; // after clean
+    char* str_copy = str; 
     
     stack_t stk = {};
     StackCtor (&stk, 10);
@@ -106,7 +116,6 @@ Tree* ReadDataBase ()
                 sscanf (q, "%[^0]", cal_str);
                 Node_t* ad = CreateNode (cal_str);
                 StackPush (&stk, ad);
-                if (tree->deep < (int) stk.size) tree->deep = (int) stk.size;
             }
         }
         if (str[0] == '}')
@@ -140,7 +149,6 @@ Tree* ReadDataBase ()
     StackPop (&stk, &tree->main_node);
     FreeStack (&stk);
     free (str_copy);
-    return tree;
 }
 
 void SkipProb (char** str)
@@ -169,22 +177,26 @@ void InteractionUser (Tree* tree)
         }
         switch (c)
         {
-        case 'G':
+        case 'G': case 'g':
             {Guessing (tree);
             break;}
-        case 'I':
+        case 'I': case 'i':
             {Identify (tree);
             break;}
-        case 'C':
+        case 'C': case 'c':
             {Compare (tree);
             break;}
-        case 'B':
+        case 'B': case 'b':
             {printf ("update\n");
             break;}
-        case 'S':
-            {printf ("update\n");
+        case 'S': case 's':
+            {
+            FILE* file = fopen ("./DataAkinator.txt", "w");
+            tree->file_data = file;
+            Print (tree->main_node, tree);
+            fclose (file);
             break;}
-        case 'E':
+        case 'E': case 'e':
             {isEnd = 0;
             break;}
         default:    
@@ -195,18 +207,17 @@ void InteractionUser (Tree* tree)
 
 void Compare (Tree* tree)
 {
-    char str1[100] = "";
-    scanf ("%[^\n]", str1);
-    getchar ();
+    char* str1 = ScanStr ();
     stack_t* stk1 = Way (tree, str1);
+    free (str1);
 
     if (!stk1) printf ("This character is not in the database\n");
     else
     {
-        char str2[100] = "";
-        scanf ("%[^\n]", str2);
-        getchar ();
+        char* str2 = ScanStr ();
         stack_t* stk2 = Way (tree, str2);
+        free (str2);
+        
         if (!stk2) printf ("This character is not in the database\n");
         else
         {
@@ -225,16 +236,19 @@ void PrintCompare (stack_t* stk1, stack_t* stk2)
     StackPop (stk1, &node1_main);
     Node_t* node2_main = NULL;
     StackPop (stk2, &node2_main);
+
     Node_t* node1_parent = NULL;
     StackPop (stk1, &node1_parent);
     Node_t* node2_parent = NULL;
     StackPop (stk2, &node2_parent);
+
     Node_t* node1_son = NULL;
     StackPop (stk1, &node1_son);
     Node_t* node2_son = NULL;
     StackPop (stk2, &node2_son);
 
     printf ("Similarities: ");
+
     while (!(strcmp (node1_son->data, node2_son->data)))
     {
         printf ("%s ", node1_parent->data);
@@ -254,10 +268,9 @@ void PrintCompare (stack_t* stk1, stack_t* stk2)
 
 void Identify (Tree* tree)
 {
-    char str[100] = "";
-    scanf ("%[^\n]", str);
-    getchar ();
+    char* str = ScanStr ();
     stack_t* stk = Way (tree, str);
+    free (str);
 
     if (!stk) printf ("This character is not in the database\n");
     else 
@@ -272,18 +285,21 @@ stack_t* Way (Tree* tree, char* str)
 {
     Node_t* elem = NULL;
     Find (tree->main_node, str, &elem);
+
     if (!elem) return NULL;
+
     Node_t* elem_0 = elem;
     stack_t* stk = (stack_t*) calloc (1, sizeof (stack_t));
     StackCtor (stk, 10);
-    assert (stk);
 
     while (elem->parent)
     {
         StackPush (stk, elem->parent);
         elem = elem->parent;
     }
+
     StackPush (stk, elem_0);
+
     return stk;
 }
 
@@ -291,24 +307,32 @@ void PrintIdentify (stack_t* stk)
 {
     Node_t* node_0 = NULL;
     StackPop (stk, &node_0);
+
     Node_t* node_1 = NULL;
     Node_t* node_2 = NULL;
+
     printf ("%s it: ", node_0->data);
+
     while (stk->size > 1)
     {
         StackPop (stk, &node_1);
         StackPop (stk, &node_2);
+
         if (node_1->left == node_2)
-            printf ("%s ", node_1->data);
+            printf ("%s, ", node_1->data);
         else
-            printf ("NO %s ", node_1->data);
+            printf ("NO %s, ", node_1->data);
+
         StackPush (stk, node_2);
     }
+
     StackPop (stk, &node_1);
+
     if (node_1->left == node_0)
-        printf ("%s ", node_1->data);
+        printf ("%s.", node_1->data);
     else
-        printf ("NO %s ", node_1->data);
+        printf ("NO %s.", node_1->data);
+
     putchar ('\n');
 }
 
@@ -343,11 +367,9 @@ void Guessing (Tree* tree)
 
     else
     {
-        tree->deep += 1;
         printf ("Who is it?\n");
         char* answer_0 = ScanStr (); 
         printf ("How does %s differ from %s\n", answer_0, node->data);
-        getchar ();
 
         char* zxc = ScanStr ();
 

@@ -9,20 +9,22 @@
 struct Tree
 {
     Node_t* main_node;
-    int deep;
+    FILE* file_data;
 };
 
 typedef Node_t* StackElem_t;
 
 Node_t* CreateNode (char* value);
-void Print (Node_t* node);
-void DtorNode (Node_t* node);
+void Print (Node_t* node, Tree* tree);
+void TreeCtor (Tree* tree, const char* name_file);
+void NodeDtor (Node_t* node);
+void TreeDtor (Tree* tree);
 void CreateDot (Node_t* node, FILE* file);
 void PrintDot (Node_t* node);
 void InteractionUser(Tree* tree);
 // void NewFunction(Node_t *node);
 void Guessing (Tree* node);
-Tree* ReadDataBase ();
+void ReadDataBase (Tree* tree);
 void SkipProb (char** str);
 int CleanBufer ();
 int ScanYesNo ();

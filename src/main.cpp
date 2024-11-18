@@ -6,11 +6,11 @@
 
 int main()
 {   
-    Tree* tree = ReadDataBase();
-    assert (tree);
-    InteractionUser (tree);
+    Tree tree = {};
+    TreeCtor (&tree, "./DataAkinator.txt");
+    assert (&tree);
+    InteractionUser (&tree);
     
-    PrintDot (tree->main_node);
-    DtorNode (tree->main_node);
-    free (tree);
+    PrintDot ((&tree)->main_node);
+    TreeDtor (&tree);
 }
