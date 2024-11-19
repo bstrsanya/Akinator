@@ -30,7 +30,6 @@ void Print (Node_t* node, Tree* tree)
     fprintf (tree->file_data, "}");
 }
 
-
 void NodeDtor (Node_t* node)
 {
     if (!node) return;
@@ -49,13 +48,14 @@ void TreeDtor (Tree* tree)
 
 void TreeCtor (Tree* tree, const char* name_file)
 {
+    assert (tree);
+    assert (name_file);
+
     FILE* file = fopen (name_file, "r");
     tree->file_data = file;
     ReadDataBase (tree);
     fclose (tree->file_data);
 }
-
-
 
 void CreateDot (Node_t* node, FILE* file_dot)
 {
@@ -75,12 +75,31 @@ void CreateDot (Node_t* node, FILE* file_dot)
     }
 }
 
+void CreateDotUser (Node_t* node, FILE* file_dot)
+{
+    if (!node) return;
+
+    fprintf (file_dot, "node%p [shape=record; style = filled; fillcolor = \"#ffe4c4\"; color = \"#800000\"; label = \"{%s}\"];\n", node, node->data);
+
+    if (node->left) 
+    {
+        fprintf (file_dot, "node%p -> node%p [color = red, style = bold, arrowhead = vee, taillabel = \"yes\"];\n", node, node->left);
+        CreateDotUser (node->left, file_dot);
+    }
+    if (node->right) 
+    {
+        fprintf (file_dot, "node%p -> node%p [color = red, style = bold, arrowhead = vee, taillabel = \"no\"];\n", node, node->right);
+        CreateDotUser (node->right, file_dot);
+    }
+}
+
 void PrintDot (Node_t* node)
 {
     FILE* file_dot = fopen ("./aaa.dot", "w");
     assert (file_dot != NULL);
     fprintf (file_dot, "digraph{\nsplines=\"ortho\";\n");
-    CreateDot (node, file_dot);
+    // fprintf (file_dot, "digraph{\n");
+    CreateDotUser (node, file_dot);
     fprintf (file_dot, "}");
     fclose (file_dot);
     system ("dot ./aaa.dot -Tpng -o ./aaa.png");
@@ -113,6 +132,8 @@ void ReadDataBase (Tree* tree)
                 str += n + 2;
 
                 char* cal_str = (char*) calloc ((size_t) n + 1, sizeof (char));
+                assert (cal_str);
+
                 sscanf (q, "%[^0]", cal_str);
                 Node_t* ad = CreateNode (cal_str);
                 StackPush (&stk, ad);
@@ -168,7 +189,7 @@ void InteractionUser (Tree* tree)
     while (isEnd)
     {
         printf ("[G]uess [I]dentify [C]ompare\n"
-        "[B]inary_tree [S]ave [E]xit\n");
+                "[B]inary_tree [S]ave [E]xit\n");
         c = getchar ();
         while (!CleanBufer ())
         {
@@ -247,11 +268,22 @@ void PrintCompare (stack_t* stk1, stack_t* stk2)
     Node_t* node2_son = NULL;
     StackPop (stk2, &node2_son);
 
-    printf ("Similarities: ");
+    int n = 0;
 
     while (!(strcmp (node1_son->data, node2_son->data)))
     {
-        printf ("%s ", node1_parent->data);
+        if (!n) 
+        {
+            printf ("%s is similar to %s in that ", node1_main->data, node2_main->data);
+            n += 1;
+        }
+
+        if (node1_parent->left == node1_son)
+            printf ("%s, ", node1_parent->data);
+
+        else
+            printf ("NO %s, ", node1_parent->data);
+
         StackPush (stk1, node1_son);        
         StackPush (stk2, node2_son); 
         StackPop (stk1, &node1_parent);
@@ -263,7 +295,11 @@ void PrintCompare (stack_t* stk1, stack_t* stk2)
         }
         else break;
     }
-    printf ("\nDifferences: %s\n", node1_parent->data);
+
+    if (n) 
+        printf ("but %s is %s\n", node1_main->data, node2_parent->data);
+    else    
+        printf ("%s is differ %s in that %s\n", node1_main->data, node2_main->data, node1_parent -> data);
 }
 
 void Identify (Tree* tree)

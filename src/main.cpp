@@ -4,11 +4,10 @@
 
 #include "Akinator.h"
 
-int main()
+int main ()
 {   
     Tree tree = {};
     TreeCtor (&tree, "./DataAkinator.txt");
-    assert (&tree);
     
     InteractionUser (&tree);
 
