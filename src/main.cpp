@@ -5,7 +5,7 @@
 #include "Akinator.h"
 
 int main ()
-{   
+{
     Tree tree = {};
     TreeCtor (&tree, "./DataAkinator.txt");
     

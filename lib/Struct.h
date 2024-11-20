@@ -7,6 +7,7 @@ struct Node_t
     Node_t* left;
     Node_t* right;
     Node_t* parent;
+    int type;
 };
 
 typedef Node_t* StackElem_t;

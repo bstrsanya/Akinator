@@ -1,5 +1,5 @@
-#ifndef TREE_H
-#define TREE_H
+#ifndef AKINATOR_H
+#define AKINATOR_H
 
 #include "Readfile.h"
 #include "SizeFile.h"
@@ -10,30 +10,42 @@ struct Tree
 {
     Node_t* main_node;
     FILE* file_data;
+    char* array_tree;
 };
 
-typedef Node_t* StackElem_t;
+// Akinator
 
-Node_t* CreateNode (char* value);
-void Print (Node_t* node, Tree* tree);
+Node_t* NodeCtor (char* value);
 void TreeCtor (Tree* tree, const char* name_file);
 void NodeDtor (Node_t* node);
 void TreeDtor (Tree* tree);
-void CreateDot (Node_t* node, FILE* file);
-void PrintDot (Node_t* node);
-void InteractionUser(Tree* tree);
-void Guessing (Tree* node);
+
 void ReadDataBase (Tree* tree);
 void SkipProb (char** str);
-int CleanBufer ();
-int ScanYesNo ();
-void Find (Node_t* node, char* str, Node_t** elem);
+
+void InteractionUser(Tree* tree);
+
+void Guessing (Tree* node);
 void Identify (Tree* tree);
-void Compare (Tree* tree);
-stack_t* Way (Tree* tree, char* str);
 void PrintIdentify (stack_t* stk);
+void Compare (Tree* tree);
 void PrintCompare (stack_t* stk1, stack_t* stk2);
+void ShowTree (Node_t* node);
+void SaveBinaryTree (Node_t* node, Tree* tree);
+
+// GraphDump
+void GraphTreeForDebug (Node_t* node, FILE* file);
+void GraphTreeForUser (Node_t* node, FILE* file_dot);
+
+// GenericFunc
+stack_t* Way (Tree* tree, char* str);
+void Find (Node_t* node, char* str, Node_t** elem);
+int CleanBufer ();
 char* ScanStr ();
-void CreateDotUser (Node_t* node, FILE* file_dot);
+int ScanYesNo ();
+
+const int YES = 1;
+const int NEW = 2;
+const int NO  = 0;
 
 #endif
